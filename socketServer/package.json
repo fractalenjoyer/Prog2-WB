@@ -1,0 +1,14 @@
+{
+  "name": "sockettest",
+  "version": "1.0.0",
+  "description": "test",
+  "main": "index.js",
+  "scripts": {
+    "test": "node index.js"
+  },
+  "author": "board",
+  "license": "ISC",
+  "dependencies": {
+    "socket.io": "^4.5.2"
+  }
+}

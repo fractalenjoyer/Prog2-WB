@@ -1,0 +1,16 @@
+{
+  "name": "socketclient",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "node index.js"
+  },
+  "author": "board",
+  "license": "ISC",
+  "dependencies": {
+    "socket.io": "^4.5.2",
+    "socket.io-client": "^4.5.2"
+  }
+}
