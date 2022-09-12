@@ -1,33 +1,61 @@
 const { Server } = require("socket.io");
 
-const io = new Server(3000);
-
-let users = {};
-
-
-io.on("connection", (socket) => {
-    users[socket.id] = new User(socket);
-    setTimeout(() => {
-        users[socket.id].addCards([4, 5, 6]);
-    }, 2000);
-    socket.on("disconnect", () => {
-        delete users[socket.id];
-        console.log("User disconnected", users);
-    })
-})
+class Users {
+	constructor() {
+		this.users = {};
+	}
+	add(socket, data) {
+		if (this.find("name", data.name) || String(data.name).length > 15) return true;
+		socket.on("disconnect", () => {
+			delete this.users[socket.id];
+		});
+        this.users[socket.id] = new User(data.name, socket);
+        io.emit("chatUpdate", { sender: "[Server]", message: `${data.name} has joined the chat` });
+	}
+	find(field, query) {
+		for (let [key, value] of Object.entries(this.users))
+			if (value[field] == query) return key;
+	}
+}
 
 class User {
-    constructor(socket) {
-        this.name
-        this.cards = [1, 2, 3];
-        this.socket = socket;
-        socket.on("registerUser", (data) => {
-            this.name = data.name;
-            console.log("User " + this.name + " registered");
-        });
-    }
-    addCards(cards) {
-        this.cards.push(cards);
-        this.socket.emit("newCards", {cards: cards});
+	constructor(name, socket) {
+		this.name = name;
+		this.clicks = 0;
+		socket.onAny((event, ...args) => {
+            if (typeof this[event] === "function")
+                this[event](...args);
+		});
+	}
+	chatSent(data) {
+		io.emit(
+			"chatUpdate",
+			(messages[Date.now()] = {
+				sender: this.name,
+				message: data.message,
+			})
+		);
+	}
+    click(callback) {
+        callback(this.clicks++);
     }
 }
+
+const messages = {};
+const users = new Users();
+const io = new Server(3000, {
+	cors: {
+		origin: "*",
+		methods: ["GET", "POST"],
+	},
+});
+
+io.on("connection", (socket) => {
+	socket.on("registerUser", (data, callback) => {
+		if (users.add(socket, data)) {
+            callback("Username not available");
+        } else
+		    callback("User registered");
+            socket.removeAllListeners("registerUser");
+	});
+});

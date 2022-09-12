@@ -1,0 +1,11 @@
+#chat {
+    height: 30vmin;
+    overflow: auto;
+}
+
+.chatMessage {
+    border-radius: 5px;
+    margin: 5px;
+    padding: 5px;
+    background-color: lightslategray
+}
