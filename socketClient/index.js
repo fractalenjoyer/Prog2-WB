@@ -1,4 +1,4 @@
-const socket = io(window.location.hostname+":3000");
+const socket = io(window.location.hostname + ":3000");
 
 let userInput = document.querySelector("#inp");
 let output = document.querySelector("#output");
@@ -35,16 +35,16 @@ socket.on("chatUpdate", (data) => {
 userInput.addEventListener("keyup", (e) => {
 	if (e.key === "Enter") {
 		socket.emit("registerUser", { name: userInput.value }, (callback) => {
-			output.innerText = callback;
+			window.localStorage.setItem("token", callback.token);
+			output.innerText = callback.message;
 		});
 		userInput.style.display = "none";
 	}
 });
 
 chatButton.onclick = () => {
-	socket.emit("click", (callback) => {
-		chatButton.innerHTML = callback;
-	})
+	window.localStorage.removeItem("token");
+	window.location.reload();
 }
 
 chatInput.addEventListener("keyup", (e) => {
@@ -53,3 +53,14 @@ chatInput.addEventListener("keyup", (e) => {
 		chatInput.value = "";
 	}
 });
+
+if (window.localStorage.getItem("token")) {
+	socket.emit("login", { token: window.localStorage.getItem("token") }, (callback) => {
+		output.innerText = callback.message;
+		if (callback.success) {
+			userInput.style.display = "none";
+		} else {
+			console.assert(callback.success, "Login failed");
+		}
+	});	
+}

@@ -5,27 +5,34 @@ class Users {
 		this.users = {};
 	}
 	add(socket, data) {
-		if (this.find("name", data.name) || String(data.name).length > 15) return true;
-		socket.on("disconnect", () => {
-			delete this.users[socket.id];
-		});
-        this.users[socket.id] = new User(data.name, socket);
-        io.emit("chatUpdate", { sender: "[Server]", message: `${data.name} has joined the chat` });
+		if (this.find("name", data.name)) return false;
+		let token;
+		while (this.find("token", (token = btoa(Math.random()*Date.now()))));
+        this.users[socket.id] = new User(data.name, socket, token);
+		io.emit("chatUpdate", { sender: "[Server]", message: `${data.name} has joined the chat` });
+		return token;
 	}
 	find(field, query) {
 		for (let [key, value] of Object.entries(this.users))
 			if (value[field] == query) return key;
 	}
+	login(token, socket) {
+		let user = this.users[this.find("token", token)]
+		if (user) {
+			io.emit("chatUpdate", { sender: "[Server]", message: `${user.name} has joined the chat` });
+			user.addListeners(socket);
+			return user.name;
+		} 
+		return false
+	}
 }
 
 class User {
-	constructor(name, socket) {
+	constructor(name, socket, token) {
 		this.name = name;
+		this.token = token
 		this.clicks = 0;
-		socket.onAny((event, ...args) => {
-            if (typeof this[event] === "function")
-                this[event](...args);
-		});
+		this.addListeners(socket);
 	}
 	chatSent(data) {
 		io.emit(
@@ -39,6 +46,12 @@ class User {
     click(callback) {
         callback(this.clicks++);
     }
+	addListeners(socket) {
+		socket.onAny((event, ...args) => {
+            if (typeof this[event] === "function")
+                this[event](...args);
+		});
+	}
 }
 
 const messages = {};
@@ -52,10 +65,26 @@ const io = new Server(3000, {
 
 io.on("connection", (socket) => {
 	socket.on("registerUser", (data, callback) => {
-		if (users.add(socket, data)) {
-            callback("Username not available");
-        } else
-		    callback("User registered");
+		let token;
+		if (token = users.add(socket, data)) {
+			callback({
+				message: "User registered",
+				token: token
+			});
             socket.removeAllListeners("registerUser");
+        } else
+			callback({
+				message: "Username not available",
+			});
+		    
+	});
+	socket.on("login", (data, callback) => {
+		let name = users.login(data.token, socket);
+		callback({
+			name: name,
+			message: "User logged in",
+			success: name ? true : false
+		})
+		socket.removeAllListeners("login");
 	});
 });
