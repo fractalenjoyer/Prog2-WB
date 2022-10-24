@@ -8,8 +8,8 @@ def left():
                 frow[i] *= 2
                 frow[i+1] = 0
         frow = [*filter(bool,frow)]
-        row[:] = frow + [0]*(4-len(frow))
-            
+        row[:] = frow + [0]*(4-len(frow))    
+
 def right():
     for row in board:
         frow = [*filter(bool,row)]
