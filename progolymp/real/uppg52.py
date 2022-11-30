@@ -11,7 +11,7 @@ class Inputer:
         return self.lines.pop()
 
 # put in test file name
-input = Inputer("uppg5.txt")
+input = Inputer("uppg52.txt")
 
 import numpy as np
 from numpy.fft import fft, ifft
